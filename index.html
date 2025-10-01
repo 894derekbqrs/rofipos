@@ -6,101 +6,109 @@
 <style>
 body {
     font-family: Arial, sans-serif;
-    background-color: #888888; /* grey background */
-    color: #ff0000; /* red text */
+    background-color: #f0f0f0; /* original light background */
+    color: #000;
     padding: 20px;
 }
 
 h1 {
     text-align: center;
-    color: #ff0000;
+    color: #6a0dad; /* original burple title */
 }
 
+/* Tables grid */
 #tables {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(6, 80px);
     gap: 10px;
     margin-bottom: 20px;
 }
 
 .table {
-    background-color: #ff0000; /* red button */
-    color: #000000; /* black text */
-    border-radius: 3px; /* slightly rounded */
-    padding: 10px;
-    text-align: center;
-    cursor: pointer;
-    user-select: none;
-    border: none;
-}
-
-.table.selected {
-    background-color: #cc0000; /* darker red for selected table */
-}
-
-.table.hasOrder {
-    background-color: #ff6666; /* lighter red for tables with orders */
-}
-
-#categories {
+    background-color: #6a0dad;
+    color: #fff;
+    border: 1px solid #4b0066;
+    border-radius: 5px;
+    width: 80px;
+    height: 60px;
     display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+}
+
+.table.selected { background-color: #9b4edd; }
+.table.hasOrder { background-color: #4b0066; }
+
+/* Categories grid */
+#categories {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: 10px;
     margin-bottom: 20px;
-    flex-wrap: wrap;
 }
 
 .category {
-    background-color: #ff0000; /* red button */
-    color: #000000;
-    border-radius: 3px;
-    padding: 10px 15px;
+    background-color: #9b4edd;
+    color: #fff;
+    border: 1px solid #6a0dad;
+    border-radius: 5px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     cursor: pointer;
+    font-weight: bold;
 }
 
-.category.selected {
-    background-color: #cc0000;
-}
+.category.selected { background-color: #6a0dad; }
 
+/* Items grid */
 #items {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
     gap: 10px;
     margin-bottom: 20px;
 }
 
 .item {
-    background-color: #ff0000;
-    color: #000000;
-    border-radius: 3px;
-    padding: 10px;
-    text-align: center;
+    background-color: #c898e5;
+    border: 1px solid #6a0dad;
+    border-radius: 5px;
+    width: 80px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     cursor: pointer;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-}
-
-th, td {
-    border: 1px solid #ff0000;
-    padding: 5px;
+    font-weight: bold;
     text-align: center;
 }
 
-th {
-    background-color: #cccccc;
+.item:hover { background-color: #a156d1; }
+
+/* Order table */
+#order-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+th, td { border: 1px solid #6a0dad; padding: 5px; text-align: center; }
+th { background-color: #9b4edd; color: #fff; }
+
+/* Pay button */
+.pay {
+    width: 100px;
+    height: 50px;
+    background-color: #6a0dad;
+    color: #fff;
+    font-weight: bold;
+    text-align: center;
+    line-height: 50px;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-top: 10px;
 }
 
-button.pay {
-    padding: 5px 10px;
-    background-color: #ff0000;
-    border: none;
-    border-radius: 3px;
-    color: #000000;
-    cursor: pointer;
-}
+.pay:hover { background-color: #9b4edd; }
 </style>
 </head>
 <body>
@@ -108,9 +116,7 @@ button.pay {
 <h1>Rofi POS</h1>
 
 <div id="tables"></div>
-
 <div id="categories"></div>
-
 <div id="items"></div>
 
 <h2>Current Order</h2>
@@ -122,29 +128,46 @@ button.pay {
 </table>
 
 <h3 id="total">Total: $0.00</h3>
-<button class="pay" onclick="payTable()">Pay</button>
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<div class="pay" onclick="payTable()">Pay</div>
 
 <script>
-// --------------------- FIREBASE CONFIG ---------------------
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
-// -----------------------------------------------------------
+// Tables
+const tableLayout = [
+["140","141","B1","B2","142","143"],
+["130","131","B3","B4","132","133"],
+["120","121","122","123","124","125"],
+["110","111","B5","B6","112","113"]
+];
 
-// Items
-const items = [
+const tablesDiv = document.getElementById("tables");
+let selectedTable = null;
+const orders = {};
+
+// Initialize tables
+tableLayout.flat().forEach(t=>{
+  orders[t] = [];
+  const div = document.createElement("div");
+  div.classList.add("table");
+  div.innerText = t;
+  div.onclick = () => selectTable(t, div);
+  tablesDiv.appendChild(div);
+});
+
+// Select table
+function selectTable(t, div){
+  selectedTable = t;
+  document.querySelectorAll(".table").forEach(td=>{
+    td.classList.remove("selected");
+    if(orders[td.innerText].length>0) td.classList.add("hasOrder");
+    else td.classList.remove("hasOrder");
+  });
+  div.classList.add("selected");
+  renderOrder();
+}
+
+// Categories
+const categoriesDiv = document.getElementById("categories");
+const itemsList = [
 {category:"Breakfast", name:"French Toast", price:11.00},
 {category:"Breakfast", name:"Fried Eggs", price:11.00},
 {category:"Breakfast", name:"Bacon", price:11.00},
@@ -170,50 +193,14 @@ const items = [
 {category:"Specialty", name:"Steak", price:38.00}
 ];
 
-// Table layout
-const tableLayout = [
-["140","141","B1","B2","142","143"],
-["130","131","B3","B4","132","133"],
-["120","121","122","123","124","125"],
-["110","111","B5","B6","112","113"]
-];
-
-const tablesDiv = document.getElementById("tables");
-let selectedTable = null;
-const orders = {};
-
-// Initialize tables
-tableLayout.flat().forEach(t=>{
-  orders[t]=[];
-  const div=document.createElement("div");
-  div.classList.add("table");
-  div.innerText=t;
-  div.onclick=()=>selectTable(t,div);
-  tablesDiv.appendChild(div);
-});
-
-// Select table
-function selectTable(t,div){
-  selectedTable=t;
-  document.querySelectorAll(".table").forEach(td=>{
-    td.classList.remove("selected");
-    if(orders[td.innerText].length>0) td.classList.add("hasOrder");
-    else td.classList.remove("hasOrder");
-  });
-  div.classList.add("selected");
-  renderOrder();
-}
-
-// Categories
-const categoriesDiv=document.getElementById("categories");
-const categories=[...new Set(items.map(i=>i.category))];
-let selectedCategory=categories[0];
+const categories = [...new Set(itemsList.map(i=>i.category))];
+let selectedCategory = categories[0];
 
 categories.forEach(cat=>{
-  const div=document.createElement("div");
+  const div = document.createElement("div");
   div.classList.add("category");
-  div.innerText=cat;
-  div.onclick=()=>{selectedCategory=cat; updateItems(); updateCategoryHighlight();};
+  div.innerText = cat;
+  div.onclick = () => { selectedCategory=cat; updateItems(); updateCategoryHighlight(); };
   categoriesDiv.appendChild(div);
 });
 
@@ -225,14 +212,14 @@ function updateCategoryHighlight(){
 }
 
 // Items
-const itemsDiv=document.getElementById("items");
+const itemsDiv = document.getElementById("items");
 function updateItems(){
-  itemsDiv.innerHTML="";
-  items.filter(i=>i.category===selectedCategory).forEach(i=>{
-    const div=document.createElement("div");
+  itemsDiv.innerHTML = "";
+  itemsList.filter(i=>i.category===selectedCategory).forEach(i=>{
+    const div = document.createElement("div");
     div.classList.add("item");
-    div.innerText=`${i.name}\n$${i.price.toFixed(2)}`;
-    div.onclick=()=>addItem(i);
+    div.innerText = `${i.name}\n$${i.price.toFixed(2)}`;
+    div.onclick = () => addItem(i);
     itemsDiv.appendChild(div);
   });
 }
@@ -240,18 +227,15 @@ function updateItems(){
 // Add item
 function addItem(item){
   if(!selectedTable) return alert("Select a table first!");
-  const tableOrder=orders[selectedTable];
-  const existing=tableOrder.find(o=>o.name===item.name);
+  const tableOrder = orders[selectedTable];
+  const existing = tableOrder.find(o=>o.name===item.name);
   if(existing) existing.qty++;
   else tableOrder.push({name:item.name, price:item.price, qty:1});
   updateTableColors();
   renderOrder();
-
-  // Push to Firebase cook queue
-  database.ref('cookQueue').push({table:selectedTable, name:item.name, qty:item.qty});
 }
 
-// Remove item from table order
+// Remove item
 function removeItem(idx){
   if(!selectedTable) return;
   orders[selectedTable].splice(idx,1);
@@ -261,29 +245,29 @@ function removeItem(idx){
 
 // Render order
 function renderOrder(){
-  const tbody=document.getElementById("order-table");
-  tbody.innerHTML="";
+  const tbody = document.getElementById("order-table");
+  tbody.innerHTML = "";
   if(!selectedTable) return;
-  let total=0;
-  orders[selectedTable].forEach((o,idx)=>{
-    const row=document.createElement("tr");
-    const removeBtn=`<button onclick="removeItem(${idx})">X</button>`;
-    row.innerHTML=`<td>${o.name}</td><td>${o.qty}</td><td>$${(o.price*o.qty).toFixed(2)}</td><td>${removeBtn}</td>`;
+  let total = 0;
+  orders[selectedTable].forEach((o, idx)=>{
+    const row = document.createElement("tr");
+    const removeBtn = `<div onclick="removeItem(${idx})" style="cursor:pointer;">X</div>`;
+    row.innerHTML = `<td>${o.name}</td><td>${o.qty}</td><td>$${(o.price*o.qty).toFixed(2)}</td><td>${removeBtn}</td>`;
     tbody.appendChild(row);
-    total+=o.price*o.qty;
+    total += o.price*o.qty;
   });
-  document.getElementById("total").innerText=`Total: $${total.toFixed(2)}`;
+  document.getElementById("total").innerText = `Total: $${total.toFixed(2)}`;
 }
 
 // Pay table
 function payTable(){
-  if(!selectedTable) return;
+  if(!selectedTable) return alert("Select a table first!");
   orders[selectedTable]=[];
   renderOrder();
   updateTableColors();
 }
 
-// Update table colors based on orders
+// Update table colors
 function updateTableColors(){
   document.querySelectorAll(".table").forEach(td=>{
     td.classList.remove("hasOrder");
