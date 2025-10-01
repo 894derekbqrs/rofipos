@@ -1,49 +1,232 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Discord Activity URLs</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #2c2f33;
-      color: #ffffff;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-      color: #7289da;
-    }
-    .link-box {
-      background-color: #23272a;
-      padding: 15px;
-      margin: 10px 0;
-      border-radius: 8px;
-    }
-    a {
-      color: #00b0f4;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Temporary POS</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #2c2f33;
+    color: #ffffff;
+    padding: 20px;
+  }
+  h1 {
+    text-align: center;
+    color: #7289da;
+  }
+  #tables {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .table {
+    padding: 10px;
+    background-color: #23272a;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+  }
+  .table.selected {
+    background-color: #7289da;
+    color: #000000;
+  }
+  #categories {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .category {
+    padding: 10px 15px;
+    background-color: #23272a;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .category.selected {
+    background-color: #7289da;
+    color: #000000;
+  }
+  #items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .item {
+    padding: 10px;
+    background-color: #2c2f33;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  th, td {
+    border: 1px solid #7289da;
+    padding: 5px;
+    text-align: center;
+  }
+  th {
+    background-color: #23272a;
+  }
+</style>
 </head>
 <body>
-  <h1>Discord Activity URL Mappings</h1>
 
-  <div class="link-box">
-    <strong>Root Mapping</strong><br>
-    Prefix: /<br>
-    Target: <a href="https://www.google.com" target="_blank">www.google.com</a>
-  </div>
+<h1>Temporary POS</h1>
 
-  <div class="link-box">
-    <strong>Example Mapping</strong><br>
-    Prefix: /discord<br>
-    Target: <a href="https://discord.com" target="_blank">www.discord.com</a>
-  </div>
+<div id="tables"></div>
+
+<div id="categories"></div>
+
+<div id="items"></div>
+
+<h2>Current Order</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Item</th>
+      <th>Qty</th>
+      <th>Price</th>
+      <th>Remove</th>
+    </tr>
+  </thead>
+  <tbody id="order-table"></tbody>
+</table>
+<h3 id="total">Total: $0.00</h3>
+
+<script>
+// --------------------- CONFIG ---------------------
+const items = [
+  {category:"Breakfast", name:"French Toast", price:11.00},
+  {category:"Breakfast", name:"Fried Eggs", price:11.00},
+  {category:"Breakfast", name:"Bacon", price:11.00},
+  {category:"Breakfast", name:"Pancakes", price:11.00},
+  {category:"Breakfast", name:"Bagels", price:11.00},
+  {category:"Lunch", name:"D's Burger", price:15.00},
+  {category:"Lunch", name:"French Fries", price:15.00},
+  {category:"Lunch", name:"Mac N' Cheese", price:15.00},
+  {category:"Lunch", name:"Grilled Cheese", price:15.00},
+  {category:"Desserts", name:"Apple Pie", price:9.00},
+  {category:"Desserts", name:"Pecan Pie", price:9.00},
+  {category:"Desserts", name:"Pumpkin Pie", price:9.00},
+  {category:"Desserts", name:"Doughnut", price:9.00},
+  {category:"Desserts", name:"Muffin", price:9.00},
+  {category:"Desserts", name:"Ice Cream", price:9.00},
+  {category:"Desserts", name:"Chocolate Chip Cookie", price:9.00},
+  {category:"Desserts", name:"Pumpkin Cookie", price:9.00},
+  {category:"Beverages", name:"Water", price:0.00},
+  {category:"Beverages", name:"Coffee", price:9.00},
+  {category:"Beverages", name:"Vanilla Milkshake", price:9.00},
+  {category:"Beverages", name:"Hot Chocolate", price:9.00},
+  {category:"Beverages", name:"D's Soda", price:9.00},
+  {category:"Specialty", name:"Steak", price:38.00}
+];
+
+const tableLayout = [
+  ["140", "141", "B1", "B2", "142", "143"],
+  ["130", "131", "B3", "B4", "132", "133"],
+  ["120", "121", "122", "123", "124", "125"],
+  ["110", "111", "B5", "B6", "112", "113"]
+];
+// ---------------------------------------------------
+
+// Generate tables
+const tablesDiv = document.getElementById("tables");
+let selectedTable = null;
+const orders = {}; // store orders per table
+
+tableLayout.flat().forEach(t => {
+  orders[t] = [];
+  const div = document.createElement("div");
+  div.classList.add("table");
+  div.innerText = t;
+  div.onclick = () => selectTable(t, div);
+  tablesDiv.appendChild(div);
+});
+
+function selectTable(t, div) {
+  selectedTable = t;
+  document.querySelectorAll(".table").forEach(td=>td.classList.remove("selected"));
+  div.classList.add("selected");
+  renderOrder();
+}
+
+// Generate categories
+const categoriesDiv = document.getElementById("categories");
+const categories = [...new Set(items.map(i=>i.category))];
+let selectedCategory = categories[0];
+
+categories.forEach(cat => {
+  const div = document.createElement("div");
+  div.classList.add("category");
+  div.innerText = cat;
+  div.onclick = () => { selectedCategory = cat; updateItems(); updateCategoryHighlight(); };
+  categoriesDiv.appendChild(div);
+});
+
+function updateCategoryHighlight() {
+  document.querySelectorAll(".category").forEach(c=>c.classList.remove("selected"));
+  Array.from(categoriesDiv.children).forEach(c=>{
+    if(c.innerText === selectedCategory) c.classList.add("selected");
+  });
+}
+
+// Generate items
+const itemsDiv = document.getElementById("items");
+function updateItems() {
+  itemsDiv.innerHTML = "";
+  items.filter(i=>i.category===selectedCategory).forEach(i=>{
+    const div = document.createElement("div");
+    div.classList.add("item");
+    div.innerText = `${i.name}\n$${i.price.toFixed(2)}`;
+    div.onclick = () => addItem(i);
+    itemsDiv.appendChild(div);
+  });
+}
+
+// Add item to order
+function addItem(item) {
+  if(!selectedTable) return alert("Select a table first!");
+  const tableOrder = orders[selectedTable];
+  const existing = tableOrder.find(o=>o.name===item.name);
+  if(existing) existing.qty++;
+  else tableOrder.push({name:item.name, price:item.price, qty:1});
+  renderOrder();
+}
+
+// Remove item from order
+function removeItem(idx) {
+  if(!selectedTable) return;
+  orders[selectedTable].splice(idx,1);
+  renderOrder();
+}
+
+// Render order
+function renderOrder() {
+  const tbody = document.getElementById("order-table");
+  tbody.innerHTML = "";
+  if(!selectedTable) return;
+  let total = 0;
+  orders[selectedTable].forEach((o, idx)=>{
+    const row = document.createElement("tr");
+    const removeBtn = `<button onclick="removeItem(${idx})">X</button>`;
+    row.innerHTML = `<td>${o.name}</td><td>${o.qty}</td><td>$${(o.price*o.qty).toFixed(2)}</td><td>${removeBtn}</td>`;
+    tbody.appendChild(row);
+    total += o.price*o.qty;
+  });
+  document.getElementById("total").innerText = `Total: $${total.toFixed(2)}`;
+}
+
+// Initialize
+updateItems();
+updateCategoryHighlight();
+</script>
 
 </body>
 </html>
