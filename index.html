@@ -18,43 +18,53 @@ h1 {
 
 #tables {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(6, 80px);
     gap: 10px;
     margin-bottom: 20px;
 }
 
 .table {
-    background-color: #ff0000; /* red button */
-    color: #000000; /* black text */
-    border-radius: 3px; /* slightly rounded */
-    padding: 10px;
+    background-color: #ff0000;
+    color: #000000;
+    border-radius: 0px; /* perfectly square */
+    width: 80px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     text-align: center;
     cursor: pointer;
     user-select: none;
     border: none;
+    font-weight: bold;
 }
 
 .table.selected {
-    background-color: #cc0000; /* darker red for selected table */
+    background-color: #cc0000;
 }
 
 .table.hasOrder {
-    background-color: #ff6666; /* lighter red for tables with orders */
+    background-color: #ff6666;
 }
 
 #categories {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: 10px;
     margin-bottom: 20px;
-    flex-wrap: wrap;
 }
 
 .category {
-    background-color: #ff0000; /* red button */
+    background-color: #ff0000;
     color: #000000;
-    border-radius: 3px;
-    padding: 10px 15px;
+    border-radius: 0px; /* square */
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
     cursor: pointer;
+    font-weight: bold;
 }
 
 .category.selected {
@@ -63,7 +73,7 @@ h1 {
 
 #items {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
     gap: 10px;
     margin-bottom: 20px;
 }
@@ -71,10 +81,14 @@ h1 {
 .item {
     background-color: #ff0000;
     color: #000000;
-    border-radius: 3px;
-    padding: 10px;
+    border-radius: 0px; /* square */
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     text-align: center;
     cursor: pointer;
+    font-weight: bold;
 }
 
 table {
@@ -94,11 +108,13 @@ th {
 }
 
 button.pay {
-    padding: 5px 10px;
+    width: 80px;
+    height: 60px;
     background-color: #ff0000;
-    border: none;
-    border-radius: 3px;
+    border-radius: 0px;
     color: #000000;
+    font-weight: bold;
+    border: none;
     cursor: pointer;
 }
 </style>
