@@ -6,128 +6,106 @@
 <style>
 body {
     font-family: Arial, sans-serif;
-    background-color: #333; /* dark grey background */
-    color: #000; /* black text */
-    padding: 20px;
+    background-color: #222;
+    color: #000;
+    padding: 10px;
 }
 
 h1 {
     text-align: center;
     color: #000;
+    margin-bottom: 20px;
 }
 
+/* Tables grid */
 #tables {
     display: grid;
-    grid-template-columns: repeat(6, 80px);
+    grid-template-columns: repeat(6, 100px);
+    grid-auto-rows: 80px;
     gap: 10px;
     margin-bottom: 20px;
 }
 
 .table {
-    background-color: #bbb; /* light grey buttons */
-    color: #000;
-    border: 1px solid #666;
-    border-radius: 0px; /* square */
-    width: 80px;
-    height: 60px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    background-color: #ccc;
+    border: 2px solid #999;
+    border-radius: 0px;
+    width: 100px;
+    height: 80px;
+    line-height: 80px;
     text-align: center;
+    font-weight: bold;
     cursor: pointer;
     user-select: none;
-    font-weight: bold;
 }
 
-.table.selected {
-    background-color: #999; /* darker grey for selected table */
-}
+.table.selected { background-color: #aaa; }
+.table.hasOrder { background-color: #888; }
 
-.table.hasOrder {
-    background-color: #888; /* table has order */
-}
-
+/* Categories grid */
 #categories {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 10px;
     margin-bottom: 20px;
 }
 
 .category {
-    background-color: #bbb;
-    color: #000;
-    border: 1px solid #666;
+    background-color: #ccc;
+    border: 2px solid #999;
     border-radius: 0px;
-    height: 60px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
+    width: 120px;
+    height: 80px;
+    line-height: 80px;
+    text-align: center;
     font-weight: bold;
+    cursor: pointer;
 }
 
-.category.selected {
-    background-color: #999;
-}
+.category.selected { background-color: #aaa; }
 
+/* Items grid */
 #items {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    grid-auto-rows: 80px;
     gap: 10px;
     margin-bottom: 20px;
 }
 
 .item {
-    background-color: #ccc;
-    border: 1px solid #999;
-    border-radius: 0;
-    width: 80px;
-    height: 60px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
+    background-color: #ddd;
+    border: 2px solid #999;
+    border-radius: 0px;
+    width: 100px;
+    height: 80px;
+    line-height: 40px;
+    text-align: center;
     font-weight: bold;
-    text-align: center;
+    cursor: pointer;
 }
 
-.item:hover {
-    background-color: #aaa;
-}
+.item:hover { background-color: #bbb; }
 
-#order-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-}
+/* Order table */
+#order-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+th, td { border: 1px solid #999; padding: 5px; text-align: center; font-size: 14px; }
+th { background-color: #ccc; }
 
-th, td {
-    border: 1px solid #666;
-    padding: 5px;
-    text-align: center;
-}
-
-th {
-    background-color: #bbb;
-}
-
+/* Pay button as div */
 .pay {
-    width: 80px;
-    height: 60px;
-    background-color: #bbb;
-    border-radius: 0;
-    color: #000;
+    width: 150px;
+    height: 80px;
+    background-color: #ccc;
+    border: 2px solid #999;
+    text-align: center;
+    line-height: 80px;
     font-weight: bold;
-    border: 1px solid #666;
     cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    user-select: none;
 }
-.pay:hover {
-    background-color: #999;
-}
+
+.pay:hover { background-color: #aaa; }
 </style>
 </head>
 <body>
@@ -151,25 +129,7 @@ th {
 <h3 id="total">Total: $0.00</h3>
 <div class="pay">Pay</div>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
 <script>
-// --------------------- FIREBASE CONFIG ---------------------
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
-// -----------------------------------------------------------
-
 // Items
 const items = [
 {category:"Breakfast", name:"French Toast", price:11.00},
@@ -273,12 +233,9 @@ function addItem(item){
   else tableOrder.push({name:item.name, price:item.price, qty:1});
   updateTableColors();
   renderOrder();
-
-  // Push to Firebase cook queue
-  database.ref('cookQueue').push({table:selectedTable, name:item.name, qty:item.qty});
 }
 
-// Remove item from table order
+// Remove item
 function removeItem(idx){
   if(!selectedTable) return;
   orders[selectedTable].splice(idx,1);
@@ -304,26 +261,4 @@ function renderOrder(){
 
 // Pay table
 function payTable(){
-  if(!selectedTable) return;
-  orders[selectedTable]=[];
-  renderOrder();
-  updateTableColors();
-}
-
-// Update table colors based on orders
-function updateTableColors(){
-  document.querySelectorAll(".table").forEach(td=>{
-    td.classList.remove("hasOrder");
-    if(orders[td.innerText].length>0) td.classList.add("hasOrder");
-  });
-}
-
-// Attach pay button click
-document.querySelector(".pay").onclick = payTable;
-
-// Initialize
-updateItems();
-updateCategoryHighlight();
-</script>
-</body>
-</html>
+  if(!
