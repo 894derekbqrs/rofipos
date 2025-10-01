@@ -2,216 +2,230 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Rofi POS</title>
+<title>Temporary POS</title>
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background-color: #222;
-  color: #000;
-  padding: 10px;
-}
-
-h1 { text-align:center; color:#000; margin-bottom:20px; }
-
-.div-button {
-  display: block;
-  width: 100px;
-  height: 80px;
-  line-height: 80px;
-  background-color: #ccc;
-  border: 1px solid #999;
-  text-align: center;
-  font-weight: bold;
-  margin: 5px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.div-button:hover { background-color: #aaa; }
-
-#tables, #categories, #items {
-  margin-bottom: 20px;
-}
-
-.pay {
-  width: 150px;
-  height: 80px;
-  line-height: 80px;
-  background-color: #ccc;
-  border: 1px solid #999;
-  text-align: center;
-  font-weight: bold;
-  cursor: pointer;
-  margin-top: 20px;
-}
-
-.pay:hover { background-color: #aaa; }
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #2c2f33;
+    color: #ffffff;
+    padding: 20px;
+  }
+  h1 {
+    text-align: center;
+    color: #7289da;
+  }
+  #tables {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .table {
+    padding: 10px;
+    background-color: #23272a;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+  }
+  .table.selected {
+    background-color: #7289da;
+    color: #000000;
+  }
+  #categories {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .category {
+    padding: 10px 15px;
+    background-color: #23272a;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .category.selected {
+    background-color: #7289da;
+    color: #000000;
+  }
+  #items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .item {
+    padding: 10px;
+    background-color: #2c2f33;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  th, td {
+    border: 1px solid #7289da;
+    padding: 5px;
+    text-align: center;
+  }
+  th {
+    background-color: #23272a;
+  }
 </style>
 </head>
 <body>
 
-<h1>Rofi POS</h1>
+<h1>Temporary POS</h1>
 
-<!-- Tables -->
 <div id="tables"></div>
 
-<!-- Categories -->
 <div id="categories"></div>
 
-<!-- Items -->
 <div id="items"></div>
 
 <h2>Current Order</h2>
-<div id="order"></div>
-
-<div class="pay" onclick="payTable()">Pay</div>
+<table>
+  <thead>
+    <tr>
+      <th>Item</th>
+      <th>Qty</th>
+      <th>Price</th>
+      <th>Remove</th>
+    </tr>
+  </thead>
+  <tbody id="order-table"></tbody>
+</table>
+<h3 id="total">Total: $0.00</h3>
 
 <script>
-// Tables
-const tableNames = ["140","141","B1","B2","142","143","130","131","B3","B4","132","133","120","121","122","123","124","125","110","111","B5","B6","112","113"];
+// --------------------- CONFIG ---------------------
+const items = [
+  {category:"Breakfast", name:"French Toast", price:11.00},
+  {category:"Breakfast", name:"Fried Eggs", price:11.00},
+  {category:"Breakfast", name:"Bacon", price:11.00},
+  {category:"Breakfast", name:"Pancakes", price:11.00},
+  {category:"Breakfast", name:"Bagels", price:11.00},
+  {category:"Lunch", name:"D's Burger", price:15.00},
+  {category:"Lunch", name:"French Fries", price:15.00},
+  {category:"Lunch", name:"Mac N' Cheese", price:15.00},
+  {category:"Lunch", name:"Grilled Cheese", price:15.00},
+  {category:"Desserts", name:"Apple Pie", price:9.00},
+  {category:"Desserts", name:"Pecan Pie", price:9.00},
+  {category:"Desserts", name:"Pumpkin Pie", price:9.00},
+  {category:"Desserts", name:"Doughnut", price:9.00},
+  {category:"Desserts", name:"Muffin", price:9.00},
+  {category:"Desserts", name:"Ice Cream", price:9.00},
+  {category:"Desserts", name:"Chocolate Chip Cookie", price:9.00},
+  {category:"Desserts", name:"Pumpkin Cookie", price:9.00},
+  {category:"Beverages", name:"Water", price:0.00},
+  {category:"Beverages", name:"Coffee", price:9.00},
+  {category:"Beverages", name:"Vanilla Milkshake", price:9.00},
+  {category:"Beverages", name:"Hot Chocolate", price:9.00},
+  {category:"Beverages", name:"D's Soda", price:9.00},
+  {category:"Specialty", name:"Steak", price:38.00}
+];
+
+const tableLayout = [
+  ["140", "141", "B1", "B2", "142", "143"],
+  ["130", "131", "B3", "B4", "132", "133"],
+  ["120", "121", "122", "123", "124", "125"],
+  ["110", "111", "B5", "B6", "112", "113"]
+];
+// ---------------------------------------------------
+
+// Generate tables
 const tablesDiv = document.getElementById("tables");
 let selectedTable = null;
-const orders = {};
+const orders = {}; // store orders per table
 
-// Create tables
-tableNames.forEach(t => {
+tableLayout.flat().forEach(t => {
   orders[t] = [];
   const div = document.createElement("div");
-  div.className = "div-button";
+  div.classList.add("table");
   div.innerText = t;
-  div.setAttribute("onclick", `selectTable('${t}')`);
+  div.onclick = () => selectTable(t, div);
   tablesDiv.appendChild(div);
 });
 
-// Select table
-function selectTable(name){
-  selectedTable = name;
-  updateTables();
+function selectTable(t, div) {
+  selectedTable = t;
+  document.querySelectorAll(".table").forEach(td=>td.classList.remove("selected"));
+  div.classList.add("selected");
   renderOrder();
 }
 
-function updateTables(){
-  const divs = tablesDiv.children;
-  for(let div of divs){
-    div.style.backgroundColor = orders[div.innerText].length>0 ? "#888" : "#ccc";
-    if(div.innerText === selectedTable) div.style.backgroundColor = "#aaa";
-  }
-}
-
-// Categories
-const categories = ["Breakfast","Lunch","Desserts","Beverages","Specialty"];
+// Generate categories
 const categoriesDiv = document.getElementById("categories");
+const categories = [...new Set(items.map(i=>i.category))];
 let selectedCategory = categories[0];
-categories.forEach(cat=>{
+
+categories.forEach(cat => {
   const div = document.createElement("div");
-  div.className = "div-button";
+  div.classList.add("category");
   div.innerText = cat;
-  div.setAttribute("onclick", `selectCategory('${cat}')`);
+  div.onclick = () => { selectedCategory = cat; updateItems(); updateCategoryHighlight(); };
   categoriesDiv.appendChild(div);
 });
 
-function selectCategory(cat){
-  selectedCategory = cat;
-  updateCategory();
-  renderItems();
+function updateCategoryHighlight() {
+  document.querySelectorAll(".category").forEach(c=>c.classList.remove("selected"));
+  Array.from(categoriesDiv.children).forEach(c=>{
+    if(c.innerText === selectedCategory) c.classList.add("selected");
+  });
 }
 
-function updateCategory(){
-  const divs = categoriesDiv.children;
-  for(let div of divs){
-    div.style.backgroundColor = div.innerText===selectedCategory ? "#aaa" : "#ccc";
-  }
-}
-
-// Items
-const items = [
-{category:"Breakfast", name:"French Toast", price:11.00},
-{category:"Breakfast", name:"Fried Eggs", price:11.00},
-{category:"Breakfast", name:"Bacon", price:11.00},
-{category:"Breakfast", name:"Pancakes", price:11.00},
-{category:"Breakfast", name:"Bagels", price:11.00},
-{category:"Lunch", name:"D's Burger", price:15.00},
-{category:"Lunch", name:"French Fries", price:15.00},
-{category:"Lunch", name:"Mac N' Cheese", price:15.00},
-{category:"Lunch", name:"Grilled Cheese", price:15.00},
-{category:"Desserts", name:"Apple Pie", price:9.00},
-{category:"Desserts", name:"Pecan Pie", price:9.00},
-{category:"Desserts", name:"Pumpkin Pie", price:9.00},
-{category:"Desserts", name:"Doughnut", price:9.00},
-{category:"Desserts", name:"Muffin", price:9.00},
-{category:"Desserts", name:"Ice Cream", price:9.00},
-{category:"Desserts", name:"Chocolate Chip Cookie", price:9.00},
-{category:"Desserts", name:"Pumpkin Cookie", price:9.00},
-{category:"Beverages", name:"Water", price:0.00},
-{category:"Beverages", name:"Coffee", price:9.00},
-{category:"Beverages", name:"Vanilla Milkshake", price:9.00},
-{category:"Beverages", name:"Hot Chocolate", price:9.00},
-{category:"Beverages", name:"D's Soda", price:9.00},
-{category:"Specialty", name:"Steak", price:38.00}
-];
-
+// Generate items
 const itemsDiv = document.getElementById("items");
-
-function renderItems(){
+function updateItems() {
   itemsDiv.innerHTML = "";
   items.filter(i=>i.category===selectedCategory).forEach(i=>{
     const div = document.createElement("div");
-    div.className = "div-button";
-    div.innerText = i.name + "\n$" + i.price.toFixed(2);
-    div.setAttribute("onclick", `addItem('${i.name}',${i.price})`);
+    div.classList.add("item");
+    div.innerText = `${i.name}\n$${i.price.toFixed(2)}`;
+    div.onclick = () => addItem(i);
     itemsDiv.appendChild(div);
   });
 }
 
-// Order
-const orderDiv = document.getElementById("order");
-function addItem(name, price){
-  if(!selectedTable) return alert("Select a table first");
+// Add item to order
+function addItem(item) {
+  if(!selectedTable) return alert("Select a table first!");
   const tableOrder = orders[selectedTable];
-  const existing = tableOrder.find(o=>o.name===name);
+  const existing = tableOrder.find(o=>o.name===item.name);
   if(existing) existing.qty++;
-  else tableOrder.push({name:name, price:price, qty:1});
+  else tableOrder.push({name:item.name, price:item.price, qty:1});
   renderOrder();
-  updateTables();
 }
 
-function renderOrder(){
-  orderDiv.innerHTML = "";
+// Remove item from order
+function removeItem(idx) {
   if(!selectedTable) return;
-  const tableOrder = orders[selectedTable];
-  let total = 0;
-  tableOrder.forEach((o,idx)=>{
-    const div = document.createElement("div");
-    div.innerText = `${o.name} x${o.qty} $${(o.price*o.qty).toFixed(2)}`;
-    const remove = document.createElement("span");
-    remove.innerText = " [X]";
-    remove.style.cursor = "pointer";
-    remove.setAttribute("onclick", `removeItem(${idx})`);
-    div.appendChild(remove);
-    orderDiv.appendChild(div);
-    total += o.price*o.qty;
-  });
-  const totalDiv = document.createElement("div");
-  totalDiv.innerText = "Total: $" + total.toFixed(2);
-  orderDiv.appendChild(totalDiv);
-}
-
-function removeItem(idx){
   orders[selectedTable].splice(idx,1);
   renderOrder();
-  updateTables();
 }
 
-function payTable(){
+// Render order
+function renderOrder() {
+  const tbody = document.getElementById("order-table");
+  tbody.innerHTML = "";
   if(!selectedTable) return;
-  orders[selectedTable]=[];
-  renderOrder();
-  updateTables();
+  let total = 0;
+  orders[selectedTable].forEach((o, idx)=>{
+    const row = document.createElement("tr");
+    const removeBtn = `<button onclick="removeItem(${idx})">X</button>`;
+    row.innerHTML = `<td>${o.name}</td><td>${o.qty}</td><td>$${(o.price*o.qty).toFixed(2)}</td><td>${removeBtn}</td>`;
+    tbody.appendChild(row);
+    total += o.price*o.qty;
+  });
+  document.getElementById("total").innerText = `Total: $${total.toFixed(2)}`;
 }
 
-// Init
-selectCategory(selectedCategory);
-renderItems();
+// Initialize
+updateItems();
+updateCategoryHighlight();
 </script>
 
 </body>
