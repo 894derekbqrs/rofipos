@@ -6,14 +6,14 @@
 <style>
 body {
     font-family: Arial, sans-serif;
-    background-color: #888888; /* grey background */
-    color: #ff0000; /* red text */
+    background-color: #333; /* dark grey background */
+    color: #000; /* black text */
     padding: 20px;
 }
 
 h1 {
     text-align: center;
-    color: #ff0000;
+    color: #000;
 }
 
 #tables {
@@ -24,9 +24,10 @@ h1 {
 }
 
 .table {
-    background-color: #ff0000;
-    color: #000000;
-    border-radius: 0px; /* perfectly square */
+    background-color: #bbb; /* light grey buttons */
+    color: #000;
+    border: 1px solid #666;
+    border-radius: 0px; /* square */
     width: 80px;
     height: 60px;
     display: flex;
@@ -35,16 +36,15 @@ h1 {
     text-align: center;
     cursor: pointer;
     user-select: none;
-    border: none;
     font-weight: bold;
 }
 
 .table.selected {
-    background-color: #cc0000;
+    background-color: #999; /* darker grey for selected table */
 }
 
 .table.hasOrder {
-    background-color: #ff6666;
+    background-color: #888; /* table has order */
 }
 
 #categories {
@@ -55,20 +55,20 @@ h1 {
 }
 
 .category {
-    background-color: #ff0000;
-    color: #000000;
-    border-radius: 0px; /* square */
+    background-color: #bbb;
+    color: #000;
+    border: 1px solid #666;
+    border-radius: 0px;
     height: 60px;
     display: flex;
     justify-content: center;
     align-items: center;
-    text-align: center;
     cursor: pointer;
     font-weight: bold;
 }
 
 .category.selected {
-    background-color: #cc0000;
+    background-color: #999;
 }
 
 #items {
@@ -79,43 +79,54 @@ h1 {
 }
 
 .item {
-    background-color: #ff0000;
-    color: #000000;
-    border-radius: 0px; /* square */
+    background-color: #ccc;
+    border: 1px solid #999;
+    border-radius: 0;
+    width: 80px;
     height: 60px;
     display: flex;
     justify-content: center;
     align-items: center;
-    text-align: center;
     cursor: pointer;
     font-weight: bold;
+    text-align: center;
 }
 
-table {
+.item:hover {
+    background-color: #aaa;
+}
+
+#order-table {
     width: 100%;
     border-collapse: collapse;
     margin-bottom: 20px;
 }
 
 th, td {
-    border: 1px solid #ff0000;
+    border: 1px solid #666;
     padding: 5px;
     text-align: center;
 }
 
 th {
-    background-color: #cccccc;
+    background-color: #bbb;
 }
 
-button.pay {
+.pay {
     width: 80px;
     height: 60px;
-    background-color: #ff0000;
-    border-radius: 0px;
-    color: #000000;
+    background-color: #bbb;
+    border-radius: 0;
+    color: #000;
     font-weight: bold;
-    border: none;
+    border: 1px solid #666;
     cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.pay:hover {
+    background-color: #999;
 }
 </style>
 </head>
@@ -138,7 +149,7 @@ button.pay {
 </table>
 
 <h3 id="total">Total: $0.00</h3>
-<button class="pay" onclick="payTable()">Pay</button>
+<div class="pay">Pay</div>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -283,7 +294,7 @@ function renderOrder(){
   let total=0;
   orders[selectedTable].forEach((o,idx)=>{
     const row=document.createElement("tr");
-    const removeBtn=`<button onclick="removeItem(${idx})">X</button>`;
+    const removeBtn=`<div onclick="removeItem(${idx})" style="cursor:pointer;">X</div>`;
     row.innerHTML=`<td>${o.name}</td><td>${o.qty}</td><td>$${(o.price*o.qty).toFixed(2)}</td><td>${removeBtn}</td>`;
     tbody.appendChild(row);
     total+=o.price*o.qty;
@@ -306,6 +317,9 @@ function updateTableColors(){
     if(orders[td.innerText].length>0) td.classList.add("hasOrder");
   });
 }
+
+// Attach pay button click
+document.querySelector(".pay").onclick = payTable;
 
 // Initialize
 updateItems();
