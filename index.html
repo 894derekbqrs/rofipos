@@ -1,1 +1,95 @@
-Hello World
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RofiPOS</title>
+
+  <style>
+    body {
+      background-color: #1a1a1a;
+      color: #e0e0e0;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .screen {
+      background: #000;
+      color: #00ff00;
+      font-size: 2rem;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 2px solid #333;
+      border-radius: 8px;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    button {
+      background: #222;
+      color: #fff;
+      border: 2px solid #444;
+      padding: 20px;
+      font-size: 1.2rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #00aa00;
+      border-color: #00ff00;
+    }
+  </style>
+</head>
+<body>
+  <h1>RofiPOS</h1>
+
+  <div class="screen" id="screen">0</div>
+
+  <div class="buttons">
+    <button onclick="press('1')">1</button>
+    <button onclick="press('2')">2</button>
+    <button onclick="press('3')">3</button>
+    <button onclick="press('4')">4</button>
+    <button onclick="press('5')">5</button>
+    <button onclick="press('6')">6</button>
+    <button onclick="press('7')">7</button>
+    <button onclick="press('8')">8</button>
+    <button onclick="press('9')">9</button>
+    <button onclick="clearScreen()">C</button>
+    <button onclick="press('0')">0</button>
+    <button onclick="checkout()">Pay</button>
+  </div>
+
+  <script>
+    function press(num) {
+      let screen = document.getElementById("screen");
+      if (screen.innerText === "0") {
+        screen.innerText = num;
+      } else {
+        screen.innerText += num;
+      }
+    }
+
+    function clearScreen() {
+      document.getElementById("screen").innerText = "0";
+    }
+
+    function checkout() {
+      alert("Processing payment for $" + document.getElementById("screen").innerText);
+    }
+  </script>
+</body>
+</html>
