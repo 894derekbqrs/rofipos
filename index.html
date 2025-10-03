@@ -1,637 +1,187 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Hotel & Dining - Live View</title>
-<style>
-  :root{
-    --bg:#0f1724; --card:#0b1220; --muted:#9aa6bb; --accent:#60a5fa;
-    --vacant:#10b981; --inuse:#3b82f6; --dirty:#f59e0b;
-    --paid:#6ee7b7;
-  }
-  body{font-family:Inter,ui-sans-serif,system-ui,Montserrat,Arial; margin:0; background:linear-gradient(180deg,#061028 0%, #071226 100%); color:#e6eef8;}
-  header{padding:14px 20px; display:flex; gap:12px; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.02); border-bottom:1px solid rgba(255,255,255,0.03)}
-  header h1{margin:0; font-size:18px; font-weight:600}
-  .container{display:grid; grid-template-columns: 1fr 380px; gap:18px; padding:18px; max-width:1200px; margin:18px auto;}
-  .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:12px; padding:12px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03)}
-  .hotel-grid{display:grid; grid-template-columns: repeat(auto-fill,minmax(140px,1fr)); gap:12px}
-  .room{padding:12px; border-radius:8px; cursor:pointer; display:flex; flex-direction:column; gap:8px; min-height:88px; transition:transform .12s ease, box-shadow .12s ease;}
-  .room:hover{transform:translateY(-4px); box-shadow:0 10px 24px rgba(2,6,23,0.6)}
-  .room .title{font-weight:700}
-  .room .sub{font-size:12px; color:var(--muted)}
-  .status-dot{width:12px;height:12px;border-radius:50%; display:inline-block; margin-right:8px; vertical-align:middle}
-  .panel{display:flex; flex-direction:column; gap:8px}
-  .row{display:flex; gap:8px; align-items:center}
-  button{background:var(--accent); border:none; color:#04203a; padding:8px 10px; border-radius:8px; cursor:pointer; font-weight:600}
-  .muted{color:var(--muted); font-size:13px}
-  .side{height:calc(100vh - 120px); overflow:auto; padding-bottom:20px}
-  /* table list */
-  .tables{display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:10px}
-  .table-card{padding:10px; border-radius:8px; background:rgba(255,255,255,0.01)}
-  .orders-list{margin-top:10px; display:flex; flex-direction:column; gap:8px; }
-  .order{padding:8px; border-radius:8px; background:rgba(255,255,255,0.02); display:flex; justify-content:space-between; gap:8px; align-items:center}
-  .pill{padding:4px 8px; border-radius:999px; font-weight:700; font-size:12px}
-  .vacant{background:linear-gradient(90deg, rgba(16,185,129,0.15), rgba(16,185,129,0.06)); border:1px solid rgba(16,185,129,0.12);}
-  .inuse{background:linear-gradient(90deg, rgba(59,130,246,0.12), rgba(59,130,246,0.02)); border:1px solid rgba(59,130,246,0.12);}
-  .dirty{background:linear-gradient(90deg, rgba(245,158,11,0.12), rgba(245,158,11,0.02)); border:1px solid rgba(245,158,11,0.12);}
-  .footer{padding:12px 18px; text-align:center; color:var(--muted); font-size:13px}
-  input,select{background:transparent; border:1px solid rgba(255,255,255,0.06); padding:8px; border-radius:8px; color:inherit}
-  .flex{display:flex; gap:8px; align-items:center}
-  .big{font-size:22px; font-weight:700}
-  .small{font-size:13px}
-  .modal{position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(3,6,12,0.5); z-index:999}
-  .modal .card{width:520px; max-width:96%}
-  .close-btn{background:transparent; color:var(--muted); border:1px solid rgba(255,255,255,0.03); padding:6px 8px}
-  .order-actions{display:flex; gap:8px}
-  .pay-btn{background:linear-gradient(90deg,#16a34a,#4ade80); color:#04203a}
-  .small-muted{font-size:12px; color:var(--muted)}
-  .status-color{padding:6px 10px; border-radius:10px; font-weight:700}
-  .paid{background:linear-gradient(90deg,#bbf7d0,#6ee7b7); color:#04203a}
-  @media (max-width:900px){ .container{grid-template-columns:1fr; padding:12px} .side{height:auto} }
-</style>
+  <meta charset="UTF-8">
+  <title>Hotel & Dining POS</title>
+  <style>
+    body {
+      font-family: monospace;
+      background: #111;
+      color: #0f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      color: #0ff;
+      margin-bottom: 10px;
+    }
+    .container {
+      display: flex;
+      gap: 30px;
+      width: 95%;
+    }
+    .section {
+      flex: 1;
+      background: #000;
+      border: 2px solid #0f0;
+      padding: 15px;
+      border-radius: 8px;
+    }
+    .section h2 {
+      color: #ff0;
+      margin-bottom: 10px;
+    }
+    .rooms, .tables {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px;
+    }
+    .room, .table {
+      padding: 15px;
+      text-align: center;
+      border: 2px solid #0f0;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .room.vacant { background: #020; }
+    .room.occupied { background: #220; }
+    .room.cleaning { background: #222; }
+    .room:hover, .table:hover { filter: brightness(1.2); }
+
+    .orders {
+      margin-top: 15px;
+      background: #111;
+      padding: 10px;
+      border: 1px solid #0f0;
+      height: 200px;
+      overflow-y: auto;
+      font-size: 14px;
+    }
+    button {
+      background: #0f0;
+      color: #000;
+      border: none;
+      padding: 6px 12px;
+      margin-top: 5px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover { background: #ff0; }
+    .order-btns { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px; }
+    .total { margin-top: 10px; font-weight: bold; }
+  </style>
 </head>
 <body>
-<header>
-  <div>
-    <h1>Hotel & Dining — Live View</h1>
-    <div class="small-muted">Interactive demo — saves while users are active; resets when everyone leaves</div>
+  <h1>Hotel & Dining POS</h1>
+  <div class="container">
+    <!-- Hotel Section -->
+    <div class="section">
+      <h2>Hotel Rooms</h2>
+      <div class="rooms" id="rooms"></div>
+    </div>
+
+    <!-- Dining Section -->
+    <div class="section">
+      <h2>Dining Tables</h2>
+      <div class="tables" id="tables"></div>
+      <div class="orders" id="orders">
+        <strong>Orders:</strong><br>
+        None yet
+      </div>
+      <div class="total" id="total">Total: $0.00</div>
+      <button onclick="payBill()">Pay Bill</button>
+      <div class="order-btns">
+        <button onclick="addOrder('Burger', 12)">Burger $12</button>
+        <button onclick="addOrder('Pizza', 15)">Pizza $15</button>
+        <button onclick="addOrder('Salad', 8)">Salad $8</button>
+        <button onclick="addOrder('Soda', 3)">Soda $3</button>
+      </div>
+    </div>
   </div>
-  <div class="row">
-    <div id="activeCount" class="small-muted">Active: 0</div>
-    <button id="resetNow" title="Force reset state">Reset Now</button>
-  </div>
-</header>
 
-<main class="container">
-  <section class="card">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-      <div>
-        <div class="muted">Hotel & Rooms</div>
-        <div class="big">Rooms</div>
-      </div>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <div class="small-muted">Rooms: <span id="roomCount">0</span></div>
-        <button id="addRoomBtn">+ Add Room</button>
-      </div>
-    </div>
+  <script>
+    // --- Hotel Section ---
+    const roomContainer = document.getElementById('rooms');
+    const roomData = Array.from({length: 8}, (_, i) => ({
+      id: i + 1,
+      price: (50 + i * 10),
+      status: 'vacant' // vacant, occupied, cleaning
+    }));
 
-    <div id="hotelGrid" class="hotel-grid"></div>
+    function renderRooms() {
+      roomContainer.innerHTML = '';
+      roomData.forEach(room => {
+        const div = document.createElement('div');
+        div.className = `room ${room.status}`;
+        div.innerText = `Room ${room.id}\n$${room.price}\n${room.status}`;
+        div.onclick = () => {
+          if (room.status === 'vacant') room.status = 'occupied';
+          else if (room.status === 'occupied') room.status = 'cleaning';
+          else room.status = 'vacant';
+          renderRooms();
+        };
+        roomContainer.appendChild(div);
+      });
+    }
+    renderRooms();
 
-    <div style="margin-top:12px;" class="muted small">Legend: <span class="pill vacant">Vacant</span> <span class="pill inuse">In Use</span> <span class="pill dirty">Needs Cleaning</span></div>
-  </section>
+    // --- Dining Section ---
+    const tableContainer = document.getElementById('tables');
+    const tables = Array.from({length: 6}, (_, i) => ({
+      id: i + 1,
+      occupied: false
+    }));
 
-  <aside class="card side">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <div>
-        <div class="muted">Dining Room</div>
-        <div class="big">Tables & Orders</div>
-      </div>
-      <div class="small-muted">Orders live here</div>
-    </div>
+    function renderTables() {
+      tableContainer.innerHTML = '';
+      tables.forEach(table => {
+        const div = document.createElement('div');
+        div.className = `table`;
+        div.style.background = table.occupied ? '#220' : '#020';
+        div.innerText = `Table ${table.id}\n${table.occupied ? 'Occupied' : 'Free'}`;
+        div.onclick = () => {
+          table.occupied = !table.occupied;
+          renderTables();
+        };
+        tableContainer.appendChild(div);
+      });
+    }
+    renderTables();
 
-    <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
-      <button id="addTableBtn">+ Add Table</button>
-      <select id="tableSelector" style="min-width:160px;">
-        <option value="">Select table to add order</option>
-      </select>
-      <input id="orderItemInput" placeholder="Item (e.g., Burger)" style="flex:1"/>
-      <input id="orderPriceInput" placeholder="Price" style="width:90px"/>
-      <button id="addOrderBtn">Add Order</button>
-    </div>
+    // --- Orders ---
+    let orders = [];
+    function addOrder(item, price) {
+      orders.push({item, price});
+      renderOrders();
+    }
 
-    <div style="margin-top:12px;">
-      <div class="muted small">Pending Orders (to cook)</div>
-      <div id="pendingOrders" class="orders-list"></div>
-    </div>
-
-    <div style="margin-top:14px;">
-      <div class="muted small">All Tables</div>
-      <div id="tablesWrap" class="tables" style="margin-top:8px"></div>
-    </div>
-
-    <div style="margin-top:16px;">
-      <div class="muted small">Order History</div>
-      <div id="history" class="orders-list" style="margin-top:8px"></div>
-    </div>
-  </aside>
-</main>
-
-<div class="footer">Static demo — for cross-device live sync you'd plug in a realtime DB (Firebase, WebSocket etc.)</div>
-
-<!-- Modal area -->
-<div id="modalRoot" style="display:none"></div>
-
-<script>
-/*
-  Hotel & Dining Single-file app.
-
-  Persistence:
-    - Uses localStorage key 'hotelApp_state' to store rooms, tables, orders
-    - Heartbeat uses localStorage key 'hotelApp_heartbeats' to track clients
-    - A client writes heartbeat every HEARTBEAT_INTERVAL ms
-    - If no heartbeat entries are updated within HEARTBEAT_TIMEOUT, state resets to default
-
-  Limitations:
-    - This heartbeat/state-reset system works only for clients sharing the same origin storage (same browser profile)
-      e.g., it works in one Discord activity iframe instance or multiple tabs of the same browser.
-    - For real cross-device syncing you need a realtime backend (Firebase, WebSocket, etc.). A placeholder is left
-      where you can wire that up.
-*/
-
-const STORAGE_KEY = 'hotelApp_state_v1';
-const HEARTBEAT_KEY = 'hotelApp_heartbeats_v1';
-const HEARTBEAT_INTERVAL = 2000; // 2s
-const HEARTBEAT_TIMEOUT = 7000; // consider a client gone after 7s without heartbeat
-
-// default initial state generator
-function defaultState(){
-  const rooms = [];
-  for(let i=1;i<=8;i++){
-    rooms.push({
-      id: 'R'+String(i).padStart(2,'0'),
-      name: `Room ${i}`,
-      price: 120 + (i%3)*20,
-      status: 'vacant', // vacant | inuse | dirty
-      guest: null,
-      note: ''
-    });
-  }
-  const tables = [];
-  for(let t=1;t<=4;t++){
-    tables.push({
-      id: 'T'+t,
-      name: `Table ${t}`,
-      orders: []
-    });
-  }
-  return {
-    rooms, tables, history: []
-  };
-}
-
-// utilities
-function uid(prefix='u'){ return prefix + Math.random().toString(36).slice(2,9); }
-function now(){ return Date.now(); }
-
-// load & save state
-function loadState(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return defaultState();
-    return JSON.parse(raw);
-  }catch(e){
-    console.error('loadState err', e);
-    return defaultState();
-  }
-}
-function saveState(state){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  // optional hook: push to remote sync here
-}
-
-// heartbeat manager to detect active users
-const clientId = uid('c_');
-function writeHeartbeat(){
-  const hb = JSON.parse(localStorage.getItem(HEARTBEAT_KEY) || '{}');
-  hb[clientId] = now();
-  localStorage.setItem(HEARTBEAT_KEY, JSON.stringify(hb));
-}
-function removeHeartbeat(){
-  const hb = JSON.parse(localStorage.getItem(HEARTBEAT_KEY) || '{}');
-  delete hb[clientId];
-  localStorage.setItem(HEARTBEAT_KEY, JSON.stringify(hb));
-}
-function getActiveClients(){
-  const hb = JSON.parse(localStorage.getItem(HEARTBEAT_KEY) || '{}');
-  const cutoff = now() - HEARTBEAT_TIMEOUT;
-  const list = Object.entries(hb).filter(([k,v]) => v >= cutoff).map(([k,v]) => k);
-  return list;
-}
-function maybeResetIfNobody(){
-  const active = getActiveClients();
-  if(active.length === 0){
-    // nobody active; reset state automatically
-    console.log('No active clients detected — resetting state.');
-    const newState = defaultState();
-    saveState(newState);
-    // Also clear history heartbeats to avoid stale entries
-    localStorage.removeItem(HEARTBEAT_KEY);
-    renderAll();
-  }
-}
-
-// UI & rendering
-let state = loadState();
-
-const hotelGrid = document.getElementById('hotelGrid');
-const roomCountEl = document.getElementById('roomCount');
-const activeCountEl = document.getElementById('activeCount');
-const modalRoot = document.getElementById('modalRoot');
-const pendingOrdersEl = document.getElementById('pendingOrders');
-const tablesWrap = document.getElementById('tablesWrap');
-const tableSelector = document.getElementById('tableSelector');
-const historyEl = document.getElementById('history');
-
-function renderRooms(){
-  hotelGrid.innerHTML = '';
-  state.rooms.forEach(room => {
-    const el = document.createElement('div');
-    el.className = 'room card ' + (room.status === 'vacant' ? 'vacant' : room.status === 'inuse' ? 'inuse' : 'dirty');
-    el.style.border = '1px solid rgba(255,255,255,0.02)';
-    // color background based on status
-    el.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div class="title">${room.name}</div>
-        <div class="small-muted">$${Number(room.price).toFixed(2)}</div>
-      </div>
-      <div class="sub">${room.guest ? 'Guest: '+room.guest : 'No guest'}</div>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
-        <div class="sub">Status: <span style="font-weight:800">${room.status}</span></div>
-        <div>
-          <span class="status-dot" style="background:${room.status === 'vacant' ? getComputedStyle(document.documentElement).getPropertyValue('--vacant') : room.status === 'inuse' ? getComputedStyle(document.documentElement).getPropertyValue('--inuse') : getComputedStyle(document.documentElement).getPropertyValue('--dirty')}"></span>
-        </div>
-      </div>
-    `;
-    el.addEventListener('click', ()=> openRoomModal(room.id));
-    hotelGrid.appendChild(el);
-  });
-  roomCountEl.textContent = state.rooms.length;
-}
-
-function renderTables(){
-  tablesWrap.innerHTML = '';
-  tableSelector.innerHTML = '<option value="">Select table to add order</option>';
-  state.tables.forEach(table => {
-    tableSelector.insertAdjacentHTML('beforeend', `<option value="${table.id}">${table.name}</option>`);
-    const t = document.createElement('div');
-    t.className='table-card card';
-    t.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center;">
-      <div style="font-weight:800">${table.name}</div>
-      <div class="small-muted">${table.orders.length} orders</div>
-    </div>
-    <div style="margin-top:8px;">
-      ${table.orders.map(o=>`<div style="padding:6px;border-radius:8px;background:rgba(255,255,255,0.01);display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <div><div style="font-weight:700">${o.item}</div><div class="small-muted">${o.note||''}</div></div>
-        <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end">
-          <div class="small-muted">$${Number(o.price).toFixed(2)}</div>
-          <div style="display:flex; gap:6px">
-            <button class="small cookBtn" data-id="${o.id}" data-table="${table.id}">${o.status==='cooking'?'Mark Done':'Cook'}</button>
-            <button class="small payBtn" data-id="${o.id}" data-table="${table.id}">Pay</button>
-          </div>
-        </div>
-      </div>`).join('')}
-    </div>`;
-    tablesWrap.appendChild(t);
-  });
-}
-
-function renderPendingOrders(){
-  pendingOrdersEl.innerHTML = '';
-  const pending = [];
-  state.tables.forEach(table => {
-    table.orders.forEach(o => {
-      if(o.status === 'pending' || o.status === 'cooking') pending.push({...o, table: table.name});
-    })
-  });
-  if(pending.length === 0){
-    pendingOrdersEl.innerHTML = `<div class="small-muted">No pending orders</div>`;
-    return;
-  }
-  pending.forEach(o => {
-    const div = document.createElement('div');
-    div.className = 'order card';
-    div.innerHTML = `<div><strong>${o.item}</strong><div class="small-muted">${o.table} ${o.note ? '— '+o.note : ''}</div></div>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <div class="small-muted">$${Number(o.price).toFixed(2)}</div>
-        <div>${o.status === 'cooking' ? '<span class="pill">Cooking</span>' : '<span class="pill">Queued</span>'}</div>
-        <div><button class="cookBtn" data-id="${o.id}" data-tableid="${o.tableId||''}">${o.status==='cooking'?'Done':'Start'}</button></div>
-      </div>`;
-    pendingOrdersEl.appendChild(div);
-    // wire cook btn
-    const btn = div.querySelector('.cookBtn');
-    btn && btn.addEventListener('click', ()=> {
-      toggleCook(o.id);
-    });
-  });
-}
-
-function renderHistory(){
-  historyEl.innerHTML = '';
-  const hist = state.history.slice().reverse().slice(0,30);
-  if(hist.length===0){ historyEl.innerHTML = '<div class="small-muted">No activity yet</div>'; return; }
-  hist.forEach(h=>{
-    const d = document.createElement('div');
-    d.className='order';
-    d.innerHTML = `<div>
-      <div style="font-weight:700">${h.title}</div>
-      <div class="small-muted">${new Date(h.t).toLocaleString()}</div>
-    </div>
-    <div class="small-muted">${h.meta||''}</div>`;
-    historyEl.appendChild(d);
-  });
-}
-
-function renderAll(){
-  state = loadState();
-  renderRooms();
-  renderTables();
-  renderPendingOrders();
-  renderHistory();
-  updateActiveCount();
-}
-
-// room modal
-function openRoomModal(roomId){
-  const room = state.rooms.find(r=>r.id===roomId);
-  if(!room) return;
-  modalRoot.innerHTML = `
-    <div class="modal">
-      <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <div style="font-weight:800">${room.name}</div>
-            <div class="small-muted">${room.guest ? 'Guest: '+room.guest : 'Vacant'}</div>
-          </div>
-          <button class="close-btn" id="closeModal">Close</button>
-        </div>
-        <div style="margin-top:10px;">
-          <div class="row" style="justify-content:space-between;">
-            <div>
-              <div class="small-muted">Price</div>
-              <input id="roomPrice" value="${room.price}"/>
-            </div>
-            <div style="min-width:140px;">
-              <div class="small-muted">Status</div>
-              <select id="roomStatus">
-                <option value="vacant"${room.status==='vacant'?' selected':''}>Vacant</option>
-                <option value="inuse"${room.status==='inuse'?' selected':''}>In Use</option>
-                <option value="dirty"${room.status==='dirty'?' selected':''}>Needs Cleaning</option>
-              </select>
-            </div>
-          </div>
-
-          <div style="margin-top:10px;">
-            <div class="small-muted">Guest name (leave empty to checkout)</div>
-            <input id="guestName" placeholder="Guest full name" value="${room.guest || ''}" />
-          </div>
-
-          <div style="margin-top:10px;">
-            <div class="small-muted">Notes</div>
-            <input id="roomNote" value="${room.note || ''}" />
-          </div>
-
-          <div style="display:flex; gap:8px; margin-top:12px;">
-            <button id="saveRoom">Save</button>
-            <button id="checkInOut">${room.guest ? 'Check Out' : 'Check In'}</button>
-            <button id="markDirty">Mark Needs Cleaning</button>
-            <button id="clearRoom" style="background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)">Clear</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-  modalRoot.style.display = 'block';
-  document.getElementById('closeModal').addEventListener('click', closeModal);
-  document.getElementById('saveRoom').addEventListener('click', ()=>{
-    const p = Number(document.getElementById('roomPrice').value) || room.price;
-    const st = document.getElementById('roomStatus').value;
-    const g = document.getElementById('guestName').value.trim() || null;
-    const note = document.getElementById('roomNote').value || '';
-    const r = state.rooms.find(rr=>rr.id===roomId);
-    r.price = p; r.status = st; r.guest = g; r.note = note;
-    saveState(state);
-    pushHistory(`${r.name} updated`, `${g ? 'Guest '+g : 'No guest'} / ${st}`);
-    closeModal();
-    renderAll();
-  });
-  document.getElementById('checkInOut').addEventListener('click', ()=>{
-    const r = state.rooms.find(rr=>rr.id===roomId);
-    if(r.guest){
-      // check out -> set status to dirty
-      r.guest = null; r.status = 'dirty';
-      pushHistory(`${r.name} checked out`, 'Set to needs cleaning');
-    } else {
-      // check in -> prompt guest
-      const g = prompt('Enter guest name to check-in:');
-      if(g){
-        r.guest = g.trim(); r.status = 'inuse';
-        pushHistory(`${r.name} checked in`, `Guest ${r.guest}`);
+    function renderOrders() {
+      const orderBox = document.getElementById('orders');
+      if (orders.length === 0) {
+        orderBox.innerHTML = "<strong>Orders:</strong><br>None yet";
+      } else {
+        orderBox.innerHTML = "<strong>Orders:</strong><br>" +
+          orders.map(o => `${o.item} - $${o.price}`).join("<br>");
       }
+      const total = orders.reduce((sum, o) => sum + o.price, 0);
+      document.getElementById('total').innerText = "Total: $" + total.toFixed(2);
     }
-    saveState(state); closeModal(); renderAll();
-  });
-  document.getElementById('markDirty').addEventListener('click', ()=>{
-    const r = state.rooms.find(rr=>rr.id===roomId);
-    r.status = 'dirty';
-    pushHistory(`${r.name} marked needs cleaning`);
-    saveState(state); closeModal(); renderAll();
-  });
-  document.getElementById('clearRoom').addEventListener('click', ()=>{
-    const r = state.rooms.find(rr=>rr.id===roomId);
-    r.status = 'vacant'; r.guest = null; r.note = '';
-    pushHistory(`${r.name} cleared (vacant)`);
-    saveState(state); closeModal(); renderAll();
-  });
-}
-function closeModal(){
-  modalRoot.style.display = 'none';
-  modalRoot.innerHTML = '';
-}
 
-// orders & tables
-function addTable(){
-  const id = uid('T_');
-  state.tables.push({id, name:`Table ${state.tables.length+1}`, orders:[]});
-  pushHistory('Table added', `Table id ${id}`);
-  saveState(state); renderAll();
-}
-function addRoom(){
-  const id = uid('R_');
-  const i = state.rooms.length+1;
-  state.rooms.push({id, name:`Room ${i}`, price:100, status:'vacant', guest:null, note:''});
-  pushHistory('Room added', `Room ${i}`);
-  saveState(state); renderAll();
-}
-function addOrderToTable(tableId, item, price, note=''){
-  const table = state.tables.find(t=>t.id===tableId);
-  if(!table) return alert('Select a table first');
-  const order = { id: uid('o_'), item, price: Number(price)||0, note, status: 'pending', t: Date.now() };
-  table.orders.push(order);
-  pushHistory('Order added', `${item} @ ${table.name} $${Number(price).toFixed(2)}`);
-  saveState(state); renderAll();
-}
-function toggleCook(orderId){
-  for(const table of state.tables){
-    const o = table.orders.find(x=>x.id===orderId);
-    if(o){
-      if(o.status === 'pending') o.status = 'cooking';
-      else if(o.status === 'cooking') o.status = 'ready';
-      else if(o.status === 'ready') o.status = 'pending';
-      saveState(state);
-      renderAll();
-      return;
-    }
-  }
-}
-function payOrder(tableId, orderId){
-  const table = state.tables.find(t=>t.id===tableId);
-  if(!table) return;
-  const idx = table.orders.findIndex(x=>x.id===orderId);
-  if(idx === -1) return;
-  const o = table.orders[idx];
-  // mark paid and move to history
-  pushHistory('Order paid', `${o.item} $${Number(o.price).toFixed(2)} @ ${table.name}`);
-  state.history.push({title:`Paid: ${o.item}`, t: Date.now(), meta: `$${Number(o.price).toFixed(2)} at ${table.name}`});
-  table.orders.splice(idx,1);
-  saveState(state); renderAll();
-}
-
-// history helper
-function pushHistory(title, meta=''){
-  state.history = state.history || [];
-  state.history.push({title, meta, t: Date.now()});
-  // keep some reasonable cap
-  if(state.history.length > 1000) state.history = state.history.slice(-800);
-}
-
-// event wiring
-document.getElementById('addTableBtn').addEventListener('click', ()=>{ addTable(); });
-document.getElementById('addRoomBtn').addEventListener('click', ()=>{ addRoom(); });
-document.getElementById('addOrderBtn').addEventListener('click', ()=>{
-  const tbl = tableSelector.value;
-  const item = document.getElementById('orderItemInput').value.trim();
-  const price = document.getElementById('orderPriceInput').value.trim();
-  if(!tbl || !item || !price) return alert('Select table, enter item and price.');
-  addOrderToTable(tbl, item, Number(price), '');
-  document.getElementById('orderItemInput').value=''; document.getElementById('orderPriceInput').value='';
-});
-// delegate cook/pay buttons from tablesWrap
-tablesWrap.addEventListener('click', (ev)=>{
-  const el = ev.target;
-  if(el.classList.contains('cookBtn')){
-    const oid = el.getAttribute('data-id');
-    const tableId = el.getAttribute('data-table');
-    // find order and toggle
-    if(tableId){
-      const tbl = state.tables.find(t=>t.id===tableId);
-      if(!tbl) return;
-      const order = tbl.orders.find(o=>o.id===oid);
-      if(order){
-        if(order.status === 'pending') order.status = 'cooking';
-        else if(order.status === 'cooking') order.status = 'ready';
-        else order.status = 'pending';
-        saveState(state); renderAll();
+    function payBill() {
+      if (orders.length === 0) {
+        alert("No orders to pay for!");
+        return;
       }
-    } else {
-      toggleCook(oid);
+      const total = orders.reduce((sum, o) => sum + o.price, 0);
+      alert("Payment of $" + total.toFixed(2) + " received.");
+      orders = [];
+      renderOrders();
     }
-  }
-  if(el.classList.contains('payBtn')){
-    const oid = el.getAttribute('data-id');
-    const tableId = el.getAttribute('data-table');
-    if(!tableId) return;
-    payOrder(tableId, oid);
-  }
-});
-
-// pending orders cook button
-pendingOrdersEl.addEventListener('click', (ev)=>{
-  const el = ev.target;
-  if(el.classList.contains('cookBtn')){
-    const oid = el.getAttribute('data-id');
-    // toggle cooking/done
-    for(const t of state.tables){
-      const o = t.orders.find(x=>x.id===oid);
-      if(o){
-        if(o.status === 'pending') o.status = 'cooking';
-        else if(o.status === 'cooking') {
-          o.status = 'ready';
-        } else {
-          o.status = 'pending';
-        }
-        saveState(state); renderAll(); return;
-      }
-    }
-  }
-});
-
-// Reset now button
-document.getElementById('resetNow').addEventListener('click', ()=>{
-  if(!confirm('Reset state now? This clears all rooms/tables to defaults.')) return;
-  localStorage.removeItem(STORAGE_KEY);
-  localStorage.removeItem(HEARTBEAT_KEY);
-  state = defaultState();
-  saveState(state);
-  renderAll();
-});
-
-// storage event (sync across tabs)
-window.addEventListener('storage', (ev)=>{
-  if(ev.key === STORAGE_KEY || ev.key === HEARTBEAT_KEY){
-    renderAll();
-  }
-});
-
-// heartbeat loop
-let hbInterval = null;
-function startHeartbeat(){
-  writeHeartbeat();
-  hbInterval = setInterval(()=>{
-    writeHeartbeat();
-    // check active clients and update UI
-    updateActiveCount();
-  }, HEARTBEAT_INTERVAL);
-}
-function stopHeartbeat(){
-  if(hbInterval) clearInterval(hbInterval);
-  removeHeartbeat();
-}
-function updateActiveCount(){
-  const active = getActiveClients();
-  activeCountEl.textContent = 'Active: ' + active.length;
-  // if no active users (except maybe ourselves), let the app reset after a short delay
-  // but don't immediately wipe while someone is here.
-}
-
-// periodic check to reset when nobody active
-setInterval(()=> {
-  maybeResetIfNobody();
-}, 3000);
-
-// wire up page unload to remove heartbeat
-window.addEventListener('beforeunload', ()=> {
-  removeHeartbeat();
-});
-
-// extra: clicking pay on pending orders from pendingOrdersEl
-pendingOrdersEl.addEventListener('click', (ev)=>{
-  const btn = ev.target;
-  if(btn.tagName.toLowerCase() === 'button' && btn.textContent.toLowerCase().includes('pay')){
-    const oid = btn.getAttribute('data-id');
-    const tableId = btn.getAttribute('data-tableid');
-    if(tableId && oid) payOrder(tableId, oid);
-  }
-});
-
-// initial render
-renderAll();
-startHeartbeat();
-updateActiveCount();
-
-// Expose some functions for debugging in console
-window._hotelApp = {
-  state, saveState, loadState, renderAll
-};
-
-/* Optional place to add remote sync (Firebase / WebSocket):
-   If you want cross-device live sync (different machines / browsers), plug logic here:
-   - Initialize your realtime DB (Firebase, Pusher, etc.)
-   - On local state change, push the new state to remote
-   - Listen for remote state changes and call saveState(remoteState) + renderAll()
-   Keep caution about merge conflicts and last-write-wins behavior.
-*/
-
-</script>
+  </script>
 </body>
 </html>
