@@ -36,15 +36,16 @@
     }
     .rooms, .tables {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
       gap: 10px;
     }
     .room, .table {
-      padding: 15px;
+      padding: 10px;
       text-align: center;
       border: 2px solid #0f0;
       border-radius: 5px;
       cursor: pointer;
+      white-space: pre-line;
       transition: 0.2s;
     }
     .room.vacant { background: #020; }
@@ -52,7 +53,7 @@
     .room.cleaning { background: #222; }
     .room:hover, .table:hover { filter: brightness(1.2); }
 
-    .orders {
+    .orders, .kitchen {
       margin-top: 15px;
       background: #111;
       padding: 10px;
@@ -74,6 +75,12 @@
     button:hover { background: #ff0; }
     .order-btns { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px; }
     .total { margin-top: 10px; font-weight: bold; }
+    .kitchen-order {
+      border-bottom: 1px dashed #0f0;
+      padding: 3px 0;
+      cursor: pointer;
+    }
+    .kitchen-order:hover { color: #f00; }
   </style>
 </head>
 <body>
@@ -90,16 +97,24 @@
       <h2>Dining Tables</h2>
       <div class="tables" id="tables"></div>
       <div class="orders" id="orders">
-        <strong>Orders:</strong><br>
+        <strong>Orders (select a table):</strong><br>
         None yet
       </div>
       <div class="total" id="total">Total: $0.00</div>
       <button onclick="payBill()">Pay Bill</button>
       <div class="order-btns">
-        <button onclick="addOrder('Burger', 12)">Burger $12</button>
-        <button onclick="addOrder('Pizza', 15)">Pizza $15</button>
-        <button onclick="addOrder('Salad', 8)">Salad $8</button>
-        <button onclick="addOrder('Soda', 3)">Soda $3</button>
+        <button onclick="addOrderToTable('Burger', 12)">Burger $12</button>
+        <button onclick="addOrderToTable('Pizza', 15)">Pizza $15</button>
+        <button onclick="addOrderToTable('Salad', 8)">Salad $8</button>
+        <button onclick="addOrderToTable('Soda', 3)">Soda $3</button>
+      </div>
+    </div>
+
+    <!-- Kitchen Section -->
+    <div class="section">
+      <h2>Kitchen Orders</h2>
+      <div class="kitchen" id="kitchen">
+        <strong>No pending orders</strong>
       </div>
     </div>
   </div>
@@ -110,7 +125,8 @@
     const roomData = Array.from({length: 8}, (_, i) => ({
       id: i + 1,
       price: (50 + i * 10),
-      status: 'vacant' // vacant, occupied, cleaning
+      status: 'vacant', // vacant, occupied, cleaning
+      guest: ''
     }));
 
     function renderRooms() {
@@ -119,10 +135,21 @@
         const div = document.createElement('div');
         div.className = `room ${room.status}`;
         div.innerText = `Room ${room.id}\n$${room.price}\n${room.status}`;
+        if (room.guest) div.innerText += `\nGuest: ${room.guest}`;
         div.onclick = () => {
-          if (room.status === 'vacant') room.status = 'occupied';
-          else if (room.status === 'occupied') room.status = 'cleaning';
-          else room.status = 'vacant';
+          if (room.status === 'vacant') {
+            const name = prompt("Enter guest name:");
+            if (name) {
+              room.status = 'occupied';
+              room.guest = name;
+            }
+          } else if (room.status === 'occupied') {
+            room.status = 'cleaning';
+            room.guest = '';
+          } else {
+            room.status = 'vacant';
+            room.guest = '';
+          }
           renderRooms();
         };
         roomContainer.appendChild(div);
@@ -132,10 +159,14 @@
 
     // --- Dining Section ---
     const tableContainer = document.getElementById('tables');
+    const ordersDiv = document.getElementById('orders');
+    const totalDiv = document.getElementById('total');
     const tables = Array.from({length: 6}, (_, i) => ({
       id: i + 1,
-      occupied: false
+      occupied: false,
+      orders: []
     }));
+    let currentTable = null;
 
     function renderTables() {
       tableContainer.innerHTML = '';
@@ -145,42 +176,75 @@
         div.style.background = table.occupied ? '#220' : '#020';
         div.innerText = `Table ${table.id}\n${table.occupied ? 'Occupied' : 'Free'}`;
         div.onclick = () => {
-          table.occupied = !table.occupied;
+          currentTable = table;
+          table.occupied = true;
           renderTables();
+          renderOrders();
         };
         tableContainer.appendChild(div);
       });
     }
     renderTables();
 
-    // --- Orders ---
-    let orders = [];
-    function addOrder(item, price) {
-      orders.push({item, price});
+    // --- Orders per table ---
+    function addOrderToTable(item, price) {
+      if (!currentTable) {
+        alert("Select a table first!");
+        return;
+      }
+      const order = {item, price, table: currentTable.id};
+      currentTable.orders.push(order);
+      kitchenOrders.push(order);
       renderOrders();
+      renderKitchen();
     }
 
     function renderOrders() {
-      const orderBox = document.getElementById('orders');
-      if (orders.length === 0) {
-        orderBox.innerHTML = "<strong>Orders:</strong><br>None yet";
-      } else {
-        orderBox.innerHTML = "<strong>Orders:</strong><br>" +
-          orders.map(o => `${o.item} - $${o.price}`).join("<br>");
+      if (!currentTable) {
+        ordersDiv.innerHTML = "<strong>Orders (select a table):</strong><br>None yet";
+        totalDiv.innerText = "Total: $0.00";
+        return;
       }
-      const total = orders.reduce((sum, o) => sum + o.price, 0);
-      document.getElementById('total').innerText = "Total: $" + total.toFixed(2);
+      if (currentTable.orders.length === 0) {
+        ordersDiv.innerHTML = `<strong>Orders for Table ${currentTable.id}:</strong><br>None yet`;
+      } else {
+        ordersDiv.innerHTML = `<strong>Orders for Table ${currentTable.id}:</strong><br>` +
+          currentTable.orders.map(o => `${o.item} - $${o.price}`).join("<br>");
+      }
+      const total = currentTable.orders.reduce((sum, o) => sum + o.price, 0);
+      totalDiv.innerText = "Total: $" + total.toFixed(2);
     }
 
     function payBill() {
-      if (orders.length === 0) {
+      if (!currentTable || currentTable.orders.length === 0) {
         alert("No orders to pay for!");
         return;
       }
-      const total = orders.reduce((sum, o) => sum + o.price, 0);
-      alert("Payment of $" + total.toFixed(2) + " received.");
-      orders = [];
+      const total = currentTable.orders.reduce((sum, o) => sum + o.price, 0);
+      alert("Payment of $" + total.toFixed(2) + " received for Table " + currentTable.id);
+      currentTable.orders = [];
+      currentTable.occupied = false;
       renderOrders();
+      renderTables();
+    }
+
+    // --- Kitchen Orders ---
+    const kitchenDiv = document.getElementById('kitchen');
+    let kitchenOrders = [];
+
+    function renderKitchen() {
+      if (kitchenOrders.length === 0) {
+        kitchenDiv.innerHTML = "<strong>No pending orders</strong>";
+      } else {
+        kitchenDiv.innerHTML = kitchenOrders.map((o, idx) =>
+          `<div class="kitchen-order" onclick="completeOrder(${idx})">Table ${o.table}: ${o.item} - $${o.price}</div>`
+        ).join('');
+      }
+    }
+
+    function completeOrder(index) {
+      kitchenOrders.splice(index, 1);
+      renderKitchen();
     }
   </script>
 </body>
