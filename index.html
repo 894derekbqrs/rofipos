@@ -18,6 +18,9 @@
       color: #0ff;
       margin-bottom: 10px;
     }
+    .top-bar {
+      margin-bottom: 15px;
+    }
     .container {
       display: flex;
       gap: 30px;
@@ -81,10 +84,44 @@
       cursor: pointer;
     }
     .kitchen-order:hover { color: #f00; }
+
+    /* Cash Counter */
+    #cashCounter {
+      display: none;
+      margin-top: 20px;
+      background: #000;
+      border: 2px solid #0f0;
+      padding: 15px;
+      border-radius: 8px;
+      width: 60%;
+    }
+    #cashCounter table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    #cashCounter td {
+      padding: 5px;
+    }
+    #cashCounter input {
+      width: 60px;
+      background: #111;
+      color: #0f0;
+      border: 1px solid #0f0;
+      text-align: center;
+    }
+    #cashTotal {
+      margin-top: 10px;
+      font-weight: bold;
+      color: #ff0;
+    }
   </style>
 </head>
 <body>
   <h1>Hotel & Dining POS</h1>
+  <div class="top-bar">
+    <button onclick="toggleCashCounter()">💵 Cash Counter</button>
+  </div>
+
   <div class="container">
     <!-- Hotel Section -->
     <div class="section">
@@ -119,13 +156,31 @@
     </div>
   </div>
 
+  <!-- Cash Counter Section -->
+  <div id="cashCounter">
+    <h2>Cash Counter</h2>
+    <table>
+      <tr><td>Pennies (¢1)</td><td><input type="number" min="0" value="0" oninput="calcCash()"></td></tr>
+      <tr><td>Nickels (¢5)</td><td><input type="number" min="0" value="0" oninput="calcCash()"></td></tr>
+      <tr><td>Dimes (¢10)</td><td><input type="number" min="0" value="0" oninput="calcCash()"></td></tr>
+      <tr><td>Quarters (¢25)</td><td><input type="number" min="0" value="0" oninput="calcCash()"></td></tr>
+      <tr><td>$1 Bills</td><td><input type="number" min="0" value="0" oninput="calcCash()"></td></tr>
+      <tr><td>$5 Bills</td><td><input type="number" min="0" value="0" oninput="calcCash()"></td></tr>
+      <tr><td>$10 Bills</td><td><input type="number" min="0" value="0" oninput="calcCash()"></td></tr>
+      <tr><td>$20 Bills</td><td><input type="number" min="0" value="0" oninput="calcCash()"></td></tr>
+      <tr><td>$50 Bills</td><td><input type="number" min="0" value="0" oninput="calcCash()"></td></tr>
+      <tr><td>$100 Bills</td><td><input type="number" min="0" value="0" oninput="calcCash()"></td></tr>
+    </table>
+    <div id="cashTotal">Total: $0.00</div>
+  </div>
+
   <script>
     // --- Hotel Section ---
     const roomContainer = document.getElementById('rooms');
     const roomData = Array.from({length: 8}, (_, i) => ({
       id: i + 1,
       price: (50 + i * 10),
-      status: 'vacant', // vacant, occupied, cleaning
+      status: 'vacant',
       guest: ''
     }));
 
@@ -186,7 +241,9 @@
     }
     renderTables();
 
-    // --- Orders per table ---
+    // --- Orders ---
+    let kitchenOrders = [];
+
     function addOrderToTable(item, price) {
       if (!currentTable) {
         alert("Select a table first!");
@@ -228,10 +285,8 @@
       renderTables();
     }
 
-    // --- Kitchen Orders ---
+    // --- Kitchen ---
     const kitchenDiv = document.getElementById('kitchen');
-    let kitchenOrders = [];
-
     function renderKitchen() {
       if (kitchenOrders.length === 0) {
         kitchenDiv.innerHTML = "<strong>No pending orders</strong>";
@@ -241,10 +296,24 @@
         ).join('');
       }
     }
-
     function completeOrder(index) {
       kitchenOrders.splice(index, 1);
       renderKitchen();
+    }
+
+    // --- Cash Counter ---
+    function toggleCashCounter() {
+      const counter = document.getElementById('cashCounter');
+      counter.style.display = (counter.style.display === 'none' || counter.style.display === '') ? 'block' : 'none';
+    }
+
+    function calcCash() {
+      const inputs = document.querySelectorAll('#cashCounter input');
+      const values = Array.from(inputs).map(inp => parseInt(inp.value) || 0);
+      const denominations = [0.01, 0.05, 0.10, 0.25, 1, 5, 10, 20, 50, 100];
+      let total = 0;
+      values.forEach((count, i) => { total += count * denominations[i]; });
+      document.getElementById('cashTotal').innerText = "Total: $" + total.toFixed(2);
     }
   </script>
 </body>
