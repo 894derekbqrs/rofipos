@@ -5,37 +5,32 @@
   <title>Hotel & Dining POS</title>
   <style>
     body {
-      font-family: monospace;
-      background: #111;
-      color: #0f0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      font-family: Arial, sans-serif;
+      background: #ccc;
+      color: #000;
       margin: 0;
       padding: 20px;
     }
     h1 {
-      color: #0ff;
-      margin-bottom: 10px;
-    }
-    .top-bar {
+      text-align: center;
       margin-bottom: 15px;
     }
     .container {
       display: flex;
-      gap: 30px;
-      width: 95%;
+      gap: 20px;
+      width: 100%;
     }
     .section {
       flex: 1;
-      background: #000;
-      border: 2px solid #0f0;
+      background: #eee;
+      border: 2px solid #000;
       padding: 15px;
-      border-radius: 8px;
+      border-radius: 6px;
     }
     .section h2 {
-      color: #ff0;
-      margin-bottom: 10px;
+      margin-top: 0;
+      border-bottom: 2px solid #000;
+      padding-bottom: 5px;
     }
     .rooms, .tables {
       display: grid;
@@ -45,83 +40,79 @@
     .room, .table {
       padding: 10px;
       text-align: center;
-      border: 2px solid #0f0;
+      border: 2px solid #000;
       border-radius: 5px;
+      background: #ddd;
       cursor: pointer;
-      white-space: pre-line;
-      transition: 0.2s;
     }
-    .room.vacant { background: #020; }
-    .room.occupied { background: #220; }
-    .room.cleaning { background: #222; }
-    .room:hover, .table:hover { filter: brightness(1.2); }
-
-    .orders, .kitchen {
-      margin-top: 15px;
-      background: #111;
-      padding: 10px;
-      border: 1px solid #0f0;
+    .room.vacant { background: #bfb; }
+    .room.occupied { background: #fbb; }
+    .room.cleaning { background: #ff8; }
+    .room input {
+      margin-top: 5px;
+      width: 90%;
+      font-size: 12px;
+    }
+    .orders, .kitchen-orders {
+      margin-top: 10px;
+      background: #fff;
+      border: 1px solid #000;
+      padding: 8px;
       height: 200px;
       overflow-y: auto;
       font-size: 14px;
     }
     button {
-      background: #0f0;
-      color: #000;
-      border: none;
+      background: #333;
+      color: #fff;
+      border: 1px solid #000;
       padding: 6px 12px;
       margin-top: 5px;
       font-weight: bold;
       border-radius: 4px;
       cursor: pointer;
     }
-    button:hover { background: #ff0; }
+    button:hover { background: #555; }
     .order-btns { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px; }
     .total { margin-top: 10px; font-weight: bold; }
-    .kitchen-order {
-      border-bottom: 1px dashed #0f0;
-      padding: 3px 0;
-      cursor: pointer;
-    }
-    .kitchen-order:hover { color: #f00; }
 
-    /* Cash Counter */
-    #cashCounter {
+    /* Modal for cash counter */
+    .modal {
       display: none;
-      margin-top: 20px;
-      background: #000;
-      border: 2px solid #0f0;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: #eee;
+      border: 2px solid #000;
       padding: 15px;
-      border-radius: 8px;
-      width: 60%;
+      border-radius: 6px;
+      width: 320px;
     }
-    #cashCounter table {
+    .cash-grid {
+      display: grid;
+      grid-template-columns: 1fr 60px;
+      gap: 6px;
+      align-items: center;
+    }
+    .cash-grid input {
       width: 100%;
-      border-collapse: collapse;
+      padding: 2px;
+      text-align: right;
     }
-    #cashCounter td {
-      padding: 5px;
-    }
-    #cashCounter input {
-      width: 60px;
-      background: #111;
-      color: #0f0;
-      border: 1px solid #0f0;
-      text-align: center;
-    }
-    #cashTotal {
-      margin-top: 10px;
-      font-weight: bold;
-      color: #ff0;
+    .close-btn {
+      float: right;
+      background: #900;
+      color: #fff;
     }
   </style>
 </head>
 <body>
   <h1>Hotel & Dining POS</h1>
-  <div class="top-bar">
-    <button onclick="toggleCashCounter()">💵 Cash Counter</button>
-  </div>
-
   <div class="container">
     <!-- Hotel Section -->
     <div class="section">
@@ -134,44 +125,47 @@
       <h2>Dining Tables</h2>
       <div class="tables" id="tables"></div>
       <div class="orders" id="orders">
-        <strong>Orders (select a table):</strong><br>
+        <strong>Orders:</strong><br>
         None yet
       </div>
       <div class="total" id="total">Total: $0.00</div>
       <button onclick="payBill()">Pay Bill</button>
+      <button onclick="openCashCounter()">Cash Counter</button>
       <div class="order-btns">
-        <button onclick="addOrderToTable('Burger', 12)">Burger $12</button>
-        <button onclick="addOrderToTable('Pizza', 15)">Pizza $15</button>
-        <button onclick="addOrderToTable('Salad', 8)">Salad $8</button>
-        <button onclick="addOrderToTable('Soda', 3)">Soda $3</button>
+        <button onclick="addOrder('Burger', 12)">Burger $12</button>
+        <button onclick="addOrder('Pizza', 15)">Pizza $15</button>
+        <button onclick="addOrder('Salad', 8)">Salad $8</button>
+        <button onclick="addOrder('Soda', 3)">Soda $3</button>
       </div>
     </div>
 
     <!-- Kitchen Section -->
     <div class="section">
       <h2>Kitchen Orders</h2>
-      <div class="kitchen" id="kitchen">
-        <strong>No pending orders</strong>
-      </div>
+      <div class="kitchen-orders" id="kitchen"></div>
     </div>
   </div>
 
-  <!-- Cash Counter Section -->
-  <div id="cashCounter">
-    <h2>Cash Counter</h2>
-    <table>
-      <tr><td>Pennies (¢1)</td><td><input type="number" min="0" value="0" oninput="calcCash()"></td></tr>
-      <tr><td>Nickels (¢5)</td><td><input type="number" min="0" value="0" oninput="calcCash()"></td></tr>
-      <tr><td>Dimes (¢10)</td><td><input type="number" min="0" value="0" oninput="calcCash()"></td></tr>
-      <tr><td>Quarters (¢25)</td><td><input type="number" min="0" value="0" oninput="calcCash()"></td></tr>
-      <tr><td>$1 Bills</td><td><input type="number" min="0" value="0" oninput="calcCash()"></td></tr>
-      <tr><td>$5 Bills</td><td><input type="number" min="0" value="0" oninput="calcCash()"></td></tr>
-      <tr><td>$10 Bills</td><td><input type="number" min="0" value="0" oninput="calcCash()"></td></tr>
-      <tr><td>$20 Bills</td><td><input type="number" min="0" value="0" oninput="calcCash()"></td></tr>
-      <tr><td>$50 Bills</td><td><input type="number" min="0" value="0" oninput="calcCash()"></td></tr>
-      <tr><td>$100 Bills</td><td><input type="number" min="0" value="0" oninput="calcCash()"></td></tr>
-    </table>
-    <div id="cashTotal">Total: $0.00</div>
+  <!-- Cash Counter Modal -->
+  <div class="modal" id="cashModal">
+    <div class="modal-content">
+      <button class="close-btn" onclick="closeCashCounter()">X</button>
+      <h3>Cash Counter</h3>
+      <div class="cash-grid">
+        <label>$100:</label><input type="number" min="0" id="bill100" value="0">
+        <label>$50:</label><input type="number" min="0" id="bill50" value="0">
+        <label>$20:</label><input type="number" min="0" id="bill20" value="0">
+        <label>$10:</label><input type="number" min="0" id="bill10" value="0">
+        <label>$5:</label><input type="number" min="0" id="bill5" value="0">
+        <label>$1:</label><input type="number" min="0" id="bill1" value="0">
+        <label>Quarters:</label><input type="number" min="0" id="quarter" value="0">
+        <label>Dimes:</label><input type="number" min="0" id="dime" value="0">
+        <label>Nickels:</label><input type="number" min="0" id="nickel" value="0">
+        <label>Pennies:</label><input type="number" min="0" id="penny" value="0">
+      </div>
+      <div class="total" id="cashTotal">Total: $0.00</div>
+      <button onclick="calculateCash()">Calculate</button>
+    </div>
   </div>
 
   <script>
@@ -189,22 +183,15 @@
       roomData.forEach(room => {
         const div = document.createElement('div');
         div.className = `room ${room.status}`;
-        div.innerText = `Room ${room.id}\n$${room.price}\n${room.status}`;
-        if (room.guest) div.innerText += `\nGuest: ${room.guest}`;
+        div.innerHTML = `Room ${room.id}<br>$${room.price}<br>${room.status}`;
+        if (room.status === 'occupied') {
+          div.innerHTML += `<br><input type="text" placeholder="Guest" value="${room.guest}" 
+            oninput="roomData[${room.id - 1}].guest=this.value">`;
+        }
         div.onclick = () => {
-          if (room.status === 'vacant') {
-            const name = prompt("Enter guest name:");
-            if (name) {
-              room.status = 'occupied';
-              room.guest = name;
-            }
-          } else if (room.status === 'occupied') {
-            room.status = 'cleaning';
-            room.guest = '';
-          } else {
-            room.status = 'vacant';
-            room.guest = '';
-          }
+          if (room.status === 'vacant') room.status = 'occupied';
+          else if (room.status === 'occupied') room.status = 'cleaning';
+          else { room.status = 'vacant'; room.guest=''; }
           renderRooms();
         };
         roomContainer.appendChild(div);
@@ -214,105 +201,95 @@
 
     // --- Dining Section ---
     const tableContainer = document.getElementById('tables');
-    const ordersDiv = document.getElementById('orders');
-    const totalDiv = document.getElementById('total');
+    const ordersBox = document.getElementById('orders');
+    const kitchenBox = document.getElementById('kitchen');
     const tables = Array.from({length: 6}, (_, i) => ({
       id: i + 1,
       occupied: false,
       orders: []
     }));
-    let currentTable = null;
 
     function renderTables() {
       tableContainer.innerHTML = '';
       tables.forEach(table => {
         const div = document.createElement('div');
         div.className = `table`;
-        div.style.background = table.occupied ? '#220' : '#020';
         div.innerText = `Table ${table.id}\n${table.occupied ? 'Occupied' : 'Free'}`;
+        div.style.background = table.occupied ? '#fbb' : '#bfb';
         div.onclick = () => {
-          currentTable = table;
-          table.occupied = true;
+          table.occupied = !table.occupied;
           renderTables();
-          renderOrders();
         };
         tableContainer.appendChild(div);
       });
     }
     renderTables();
 
-    // --- Orders ---
-    let kitchenOrders = [];
+    let activeTable = tables[0]; // default table
 
-    function addOrderToTable(item, price) {
-      if (!currentTable) {
-        alert("Select a table first!");
-        return;
-      }
-      const order = {item, price, table: currentTable.id};
-      currentTable.orders.push(order);
-      kitchenOrders.push(order);
+    function addOrder(item, price) {
+      activeTable.occupied = true;
+      activeTable.orders.push({item, price});
+      renderTables();
       renderOrders();
       renderKitchen();
     }
 
     function renderOrders() {
-      if (!currentTable) {
-        ordersDiv.innerHTML = "<strong>Orders (select a table):</strong><br>None yet";
-        totalDiv.innerText = "Total: $0.00";
+      if (!activeTable || activeTable.orders.length === 0) {
+        ordersBox.innerHTML = "<strong>Orders:</strong><br>None yet";
+        document.getElementById('total').innerText = "Total: $0.00";
         return;
       }
-      if (currentTable.orders.length === 0) {
-        ordersDiv.innerHTML = `<strong>Orders for Table ${currentTable.id}:</strong><br>None yet`;
-      } else {
-        ordersDiv.innerHTML = `<strong>Orders for Table ${currentTable.id}:</strong><br>` +
-          currentTable.orders.map(o => `${o.item} - $${o.price}`).join("<br>");
-      }
-      const total = currentTable.orders.reduce((sum, o) => sum + o.price, 0);
-      totalDiv.innerText = "Total: $" + total.toFixed(2);
+      ordersBox.innerHTML = "<strong>Orders:</strong><br>" +
+        activeTable.orders.map(o => `${o.item} - $${o.price}`).join("<br>");
+      const total = activeTable.orders.reduce((sum, o) => sum + o.price, 0);
+      document.getElementById('total').innerText = "Total: $" + total.toFixed(2);
+    }
+
+    function renderKitchen() {
+      kitchenBox.innerHTML = activeTable.orders.map((o, idx) =>
+        `<div>${o.item} - $${o.price} 
+          <button onclick="removeKitchenOrder(${idx})">Done</button></div>`
+      ).join('') || "No pending orders.";
+    }
+
+    function removeKitchenOrder(index) {
+      activeTable.orders.splice(index, 1);
+      renderOrders();
+      renderKitchen();
     }
 
     function payBill() {
-      if (!currentTable || currentTable.orders.length === 0) {
+      if (activeTable.orders.length === 0) {
         alert("No orders to pay for!");
         return;
       }
-      const total = currentTable.orders.reduce((sum, o) => sum + o.price, 0);
-      alert("Payment of $" + total.toFixed(2) + " received for Table " + currentTable.id);
-      currentTable.orders = [];
-      currentTable.occupied = false;
+      const total = activeTable.orders.reduce((sum, o) => sum + o.price, 0);
+      alert("Payment of $" + total.toFixed(2) + " received.");
+      activeTable.orders = [];
+      activeTable.occupied = false;
       renderOrders();
       renderTables();
-    }
-
-    // --- Kitchen ---
-    const kitchenDiv = document.getElementById('kitchen');
-    function renderKitchen() {
-      if (kitchenOrders.length === 0) {
-        kitchenDiv.innerHTML = "<strong>No pending orders</strong>";
-      } else {
-        kitchenDiv.innerHTML = kitchenOrders.map((o, idx) =>
-          `<div class="kitchen-order" onclick="completeOrder(${idx})">Table ${o.table}: ${o.item} - $${o.price}</div>`
-        ).join('');
-      }
-    }
-    function completeOrder(index) {
-      kitchenOrders.splice(index, 1);
       renderKitchen();
     }
 
     // --- Cash Counter ---
-    function toggleCashCounter() {
-      const counter = document.getElementById('cashCounter');
-      counter.style.display = (counter.style.display === 'none' || counter.style.display === '') ? 'block' : 'none';
+    function openCashCounter() {
+      document.getElementById('cashModal').style.display = 'flex';
     }
-
-    function calcCash() {
-      const inputs = document.querySelectorAll('#cashCounter input');
-      const values = Array.from(inputs).map(inp => parseInt(inp.value) || 0);
-      const denominations = [0.01, 0.05, 0.10, 0.25, 1, 5, 10, 20, 50, 100];
+    function closeCashCounter() {
+      document.getElementById('cashModal').style.display = 'none';
+    }
+    function calculateCash() {
+      const values = {
+        bill100: 100, bill50: 50, bill20: 20, bill10: 10, bill5: 5, bill1: 1,
+        quarter: 0.25, dime: 0.1, nickel: 0.05, penny: 0.01
+      };
       let total = 0;
-      values.forEach((count, i) => { total += count * denominations[i]; });
+      for (let id in values) {
+        total += document.getElementById(id).value * values[id];
+      }
       document.getElementById('cashTotal').innerText = "Total: $" + total.toFixed(2);
     }
   </script>
