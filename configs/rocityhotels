@@ -1,5 +1,5 @@
 {
-  "name": "Restaurant 1",
-  "type": "restaurant",
-  "menu": ["Burger", "Fries", "Drink"]
+  "name": "RoCity Hotels",
+  "type": "hotel",
+  "rooms": ["Suite 1", "Suite 2", "Penthouse"]
 }
